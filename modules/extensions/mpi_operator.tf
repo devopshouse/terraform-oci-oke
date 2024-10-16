@@ -26,9 +26,9 @@ resource "null_resource" "mpi_operator" {
   }
 
   connection {
-    bastion_host        = var.bastion_host
-    bastion_user        = var.bastion_user
-    bastion_private_key = var.ssh_private_key
+    bastion_host        = var.bastion_is_public ? var.bastion_host : null
+    bastion_user        = var.bastion_is_public ? var.bastion_user : null
+    bastion_private_key = var.bastion_is_public ? var.ssh_private_key : null
     host                = var.operator_host
     user                = var.operator_user
     private_key         = var.ssh_private_key
