@@ -39,7 +39,7 @@ data "cloudinit_config" "bastion" {
 
 resource "null_resource" "await_cloudinit" {
   connection {
-    host        = oci_core_instance.bastion.public_ip
+    host        = var.is_public ? oci_core_instance.bastion.public_ip : oci_core_instance.bastion.private_ip
     user        = var.user
     private_key = var.ssh_private_key
     timeout     = "40m"
