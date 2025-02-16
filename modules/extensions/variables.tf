@@ -15,6 +15,7 @@ variable "bastion_user" { type = string }
 variable "operator_host" { type = string }
 variable "operator_user" { type = string }
 variable "ssh_private_key" { type = string }
+variable "bastion_is_public" { type = string }
 
 # CNI
 variable "vcn_cidrs" { type = list(string) }

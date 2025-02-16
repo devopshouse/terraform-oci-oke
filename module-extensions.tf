@@ -30,6 +30,7 @@ module "extensions" {
   bastion_user    = var.bastion_user
   operator_host   = local.operator_private_ip
   operator_user   = var.operator_user
+  bastion_is_public = var.bastion_is_public
 
   # CNI
   vcn_cidrs = local.vcn_cidrs
