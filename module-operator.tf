@@ -44,7 +44,7 @@ locals {
 }
 
 module "operator" {
-  count          = var.create_bastion && var.create_operator ? 1 : 0
+  count          = var.create_operator ? 1 : 0
   source         = "./modules/operator"
   state_id       = local.state_id
   compartment_id = local.compartment_id
@@ -52,6 +52,7 @@ module "operator" {
   # Bastion (to await cloud-init completion)
   bastion_host = local.bastion_public_ip
   bastion_user = var.bastion_user
+  use_bastion  = var.create_bastion && var.bastion_is_public
 
   # Operator
   assign_dns                = var.assign_dns
@@ -111,6 +112,6 @@ output "operator_private_ip" {
 output "ssh_to_operator" {
   description = "SSH command for operator host"
   value = local.operator_enabled ? join(" ", concat(["ssh"],
-    local.bastion_proxy_command, local.operator_ssh_args)
+    var.bastion_is_public && var.create_bastion ? local.bastion_proxy_command : [], local.operator_ssh_args)
   ) : null
 }
