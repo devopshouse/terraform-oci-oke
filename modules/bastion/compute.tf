@@ -13,7 +13,7 @@ output "id" {
 }
 
 output "public_ip" {
-  value = oci_core_instance.bastion.public_ip
+  value = var.is_public ? oci_core_instance.bastion.public_ip : oci_core_instance.bastion.private_ip
 }
 
 resource "oci_core_instance" "bastion" {

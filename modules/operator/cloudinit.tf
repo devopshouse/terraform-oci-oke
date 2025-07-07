@@ -367,9 +367,9 @@ data "cloudinit_config" "operator" {
 resource "null_resource" "await_cloudinit" {
   count = var.await_cloudinit ? 1 : 0
   connection {
-    bastion_host        = var.bastion_host
-    bastion_user        = var.bastion_user
-    bastion_private_key = var.ssh_private_key
+    bastion_host        = var.use_bastion ? var.bastion_host : null
+    bastion_user        = var.use_bastion ? var.bastion_user : null
+    bastion_private_key = var.use_bastion ? var.ssh_private_key : null
     host                = oci_core_instance.operator.private_ip
     user                = var.user
     private_key         = var.ssh_private_key

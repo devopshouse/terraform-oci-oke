@@ -50,3 +50,4 @@ variable "defined_tags" { type = map(string) }
 variable "freeform_tags" { type = map(string) }
 variable "tag_namespace" { type = string }
 variable "use_defined_tags" { type = bool }
+variable "use_bastion" { type = bool }
