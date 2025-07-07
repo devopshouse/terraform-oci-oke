@@ -22,9 +22,9 @@ resource "null_resource" "service_account_crb" {
     service_account_cluster_role_binding = each.value.sa_cluster_role_binding
 
     # Parameters ignored as triggers in the life_cycle block. Required to establish connections.
-    bastion_host    = var.bastion_host
-    bastion_user    = var.bastion_user
-    ssh_private_key = var.ssh_private_key
+    bastion_host        = var.use_bastion ? var.bastion_host : null
+    bastion_user        = var.use_bastion ? var.bastion_user : null
+    bastion_private_key = var.use_bastion ? var.ssh_private_key : null
     operator_host   = var.operator_host
     operator_user   = var.operator_user
   }
@@ -32,10 +32,10 @@ resource "null_resource" "service_account_crb" {
   connection {
     bastion_host        = self.triggers.bastion_host
     bastion_user        = self.triggers.bastion_user
-    bastion_private_key = self.triggers.ssh_private_key
+    bastion_private_key = self.triggers.bastion_private_key
     host                = self.triggers.operator_host
     user                = self.triggers.operator_user
-    private_key         = self.triggers.ssh_private_key
+    private_key         = self.triggers.bastion_private_key
     timeout             = "10m"
     type                = "ssh"
   }
