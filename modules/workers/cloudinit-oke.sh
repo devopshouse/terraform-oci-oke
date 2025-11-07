@@ -55,6 +55,18 @@ function get_imds_metadata() {
   get_imds_instance | jq -rcM '.metadata // {}'
 }
 
+function configure_crio_short_names() {
+  # Disable CRI-O short name enforcement for Kubernetes 1.34.1+
+  # See: https://docs.oracle.com/en-us/iaas/Content/ContEng/Concepts/contengaboutk8sversions.htm#supportedk8sversions__notes-1-34-1
+  mkdir -p /etc/crio/crio.conf.d
+  cat > /etc/crio/crio.conf.d/11-default.conf <<EOF
+[crio]
+  [crio.image]
+    short_name_mode="disabled"
+EOF
+  echo "CRI-O short name mode disabled"
+}
+
 function run_oke_init() { # Initialize OKE worker node
   if [[ -f /etc/systemd/system/oke-init.service ]]; then
     systemctl --no-block enable --now oke-init.service
@@ -100,4 +112,5 @@ function run_oke_init() { # Initialize OKE worker node
 }
 
 INSTANCE_FILE="/etc/oke/imds_instance.json"
+configure_crio_short_names
 time run_oke_init || { echo "Error in OKE startup" >&2; exit 1; }
