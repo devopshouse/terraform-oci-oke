@@ -174,3 +174,9 @@ output "apiserver_private_host" {
   description = "Private OKE cluster endpoint address"
   value       = local.apiserver_private_host
 }
+
+output "service_account_tokens" {
+  description = "Map of service account names to their tokens (sensitive). Available when service accounts are created via the extensions module."
+  value       = try(one(module.extensions[*].service_account_tokens), {})
+  sensitive   = true
+}
