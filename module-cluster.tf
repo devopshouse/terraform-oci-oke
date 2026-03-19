@@ -48,6 +48,10 @@ locals {
 
   kubeconfig_ca_cert = try(lookup(lookup(local.kubeconfig_clusters[0], "cluster", {}), "certificate-authority-data", ""), "none")
   cluster_ca_cert    = coalesce(var.cluster_ca_cert, local.kubeconfig_ca_cert)
+  
+  # Server URL and CA for provider configuration
+  server_url = try(lookup(lookup(local.kubeconfig_clusters[0], "cluster", {}), "server", ""), "")
+  server_ca  = local.kubeconfig_ca_cert
 }
 
 module "cluster" {
@@ -177,4 +181,21 @@ output "cluster_ca_cert" {
 output "apiserver_private_host" {
   description = "Private OKE cluster endpoint address"
   value       = local.apiserver_private_host
+}
+
+output "service_account_tokens" {
+  description = "Map of service account names to their tokens (sensitive). Available when service accounts are created via the extensions module."
+  value       = try(one(module.extensions[*].service_account_tokens), {})
+  sensitive   = true
+}
+
+output "server_url" {
+  description = "OKE cluster API server URL"
+  value       = local.server_url
+}
+
+output "server_ca" {
+  description = "OKE cluster CA certificate (base64 encoded)"
+  value       = length(local.server_ca) > 0 && local.server_ca != "none" ? local.server_ca : null
+  sensitive   = true
 }
