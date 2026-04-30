@@ -112,5 +112,6 @@ resource "null_resource" "operator_changed" {
     install_k9s     = var.install_k9s
     install_kubectx = var.install_kubectx
     ssh_public_key  = var.ssh_public_key
+    kubeconfig_md5  = md5(var.kubeconfig)
   }
 }

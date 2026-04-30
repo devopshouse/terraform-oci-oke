@@ -285,9 +285,11 @@ locals {
   }
 
   # Map of pool name to list of instance IP addresses for modes: 'node-pool'
+  # Exclui nós em estado DELETED/DELETING — a OCI retorna todos os nós históricos no atributo .nodes
   worker_nodepool_ips = {
     for k, v in local.worker_node_pools : k => {
       for n in lookup(v, "nodes", []) : lookup(n, "id", "") => lookup(n, "private_ip", null)
+      if !contains(["DELETED", "DELETING"], lookup(n, "state", ""))
     }
   }
 
