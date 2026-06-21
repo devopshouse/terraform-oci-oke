@@ -160,3 +160,9 @@ variable "operator_legacy_imds_endpoints_disabled" {
   description = "Whether to disable requests to the IMDSv1 endpoint and only allow requests to the IMDSv2 endpoint for the operator instance."
   type        = bool
 }
+
+variable "operator_ignore_image_changes" {
+  default     = false
+  description = "Whether to ignore operator image changes and prevent automatic replacement when a newer platform image is available. Set to true to pin the operator to its current image."
+  type        = bool
+}

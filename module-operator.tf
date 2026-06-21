@@ -52,6 +52,7 @@ module "operator" {
   # Bastion (to await cloud-init completion)
   bastion_host = local.bastion_public_ip
   bastion_user = var.bastion_user
+  use_bastion  = var.create_bastion && var.bastion_is_public
 
   # Operator
   await_cloudinit                = var.operator_await_cloudinit
@@ -75,6 +76,7 @@ module "operator" {
   operator_image_os_version      = var.operator_image_os_version
   pv_transit_encryption          = var.operator_pv_transit_encryption
   shape                          = var.operator_shape
+  ignore_image_changes           = var.operator_ignore_image_changes
   legacy_imds_endpoints_disabled = var.operator_legacy_imds_endpoints_disabled
   ssh_private_key                = sensitive(local.ssh_private_key) # to await cloud-init completion
   ssh_public_key                 = local.ssh_public_key
@@ -115,7 +117,7 @@ output "operator_private_ip" {
 
 output "ssh_to_operator" {
   description = "SSH command for operator host"
-  value = local.operator_enabled ? join(" ", concat(["ssh"],
-    local.bastion_proxy_command, local.operator_ssh_args)
+  value = (local.operator_enabled && local.operator_private_ip != null) ? join(" ", concat(["ssh"],
+    var.bastion_is_public && var.create_bastion ? local.bastion_proxy_command : [], local.operator_ssh_args)
   ) : null
 }

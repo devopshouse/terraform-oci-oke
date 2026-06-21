@@ -33,7 +33,7 @@ locals {
   # Bastion SSH ProxyCommand argument used in e.g. ssh_to_operator command output if created/provided
   bastion_ssh_user_ip = join("@", compact([var.bastion_user, local.bastion_public_ip]))
   bastion_ssh_args    = compact([local.ssh_key_arg, local.bastion_ssh_user_ip])
-  bastion_ssh_command = join(" ", concat(["ssh"], local.bastion_ssh_args))
+  bastion_ssh_command = local.bastion_public_ip != null ? join(" ", concat(["ssh"], local.bastion_ssh_args)) : null
   bastion_proxy_command = try((local.bastion_public_ip == null ? []
     : ["-o", format("ProxyCommand='ssh -W %%h:%%p %v'", join(" ", local.bastion_ssh_args))]
   ), [])

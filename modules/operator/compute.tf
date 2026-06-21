@@ -107,10 +107,11 @@ resource "oci_core_instance" "operator" {
 resource "null_resource" "operator_changed" {
   triggers = {
     cloud_init      = jsonencode(var.cloud_init)
-    image_id        = var.image_id
+    image_id        = var.ignore_image_changes ? "pinned" : var.image_id
     install_helm    = var.install_helm
     install_k9s     = var.install_k9s
     install_kubectx = var.install_kubectx
     ssh_public_key  = var.ssh_public_key
+    kubeconfig_md5  = md5(var.kubeconfig)
   }
 }

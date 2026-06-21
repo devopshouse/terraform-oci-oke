@@ -15,6 +15,10 @@ variable "assign_dns" { type = bool }
 variable "availability_domain" { type = string }
 variable "cloud_init" { type = list(map(string)) }
 variable "image_id" { type = string }
+variable "ignore_image_changes" {
+  type    = bool
+  default = false
+}
 variable "install_cilium" { type = bool }
 variable "install_oci_cli_from_repo" { type = bool }
 variable "install_helm" { type = bool }
@@ -54,3 +58,4 @@ variable "defined_tags" { type = map(string) }
 variable "freeform_tags" { type = map(string) }
 variable "tag_namespace" { type = string }
 variable "use_defined_tags" { type = bool }
+variable "use_bastion" { type = bool }
