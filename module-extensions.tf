@@ -27,11 +27,13 @@ module "extensions" {
   vcn_compartment_id       = coalesce(var.network_compartment_id, local.compartment_id)
 
   # Bastion/operator connection
-  ssh_private_key = sensitive(local.ssh_private_key)
-  bastion_host    = local.bastion_public_ip
-  bastion_user    = var.bastion_user
-  operator_host   = local.operator_private_ip
-  operator_user   = var.operator_user
+  ssh_private_key   = sensitive(local.ssh_private_key)
+  bastion_host      = local.bastion_public_ip
+  bastion_user      = var.bastion_user
+  operator_host     = local.operator_private_ip
+  operator_user     = var.operator_user
+  bastion_is_public = var.bastion_is_public
+  use_bastion       = var.create_bastion && var.bastion_is_public
 
   # CNI
   vcn_cidrs = local.vcn_cidrs
