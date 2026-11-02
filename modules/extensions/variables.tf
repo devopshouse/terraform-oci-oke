@@ -4,6 +4,7 @@
 # Common
 variable "region" { type = string }
 variable "state_id" { type = string }
+variable "cluster_id" { type = string }
 variable "worker_pools" { type = any }
 variable "kubernetes_version" { type = string }
 variable "expected_node_count" { type = number }
@@ -17,6 +18,8 @@ variable "bastion_user" { type = string }
 variable "operator_host" { type = string }
 variable "operator_user" { type = string }
 variable "ssh_private_key" { type = string }
+variable "bastion_is_public" { type = string }
+variable "use_bastion" { type = bool }
 
 # CNI
 variable "vcn_cidrs" { type = list(string) }

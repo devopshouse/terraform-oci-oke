@@ -58,3 +58,4 @@ variable "allow_image_drift" {
   type    = bool
   default = false
 }
+variable "use_bastion" { type = bool }

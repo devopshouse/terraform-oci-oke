@@ -407,6 +407,7 @@ Each entry in the `worker_pools` map supports the following attributes:
 | `create` | Whether to create this pool. | `true` / `false` |
 | `image_type` | Image type for this pool. | `"oke"` / `"custom"` / `"platform"` |
 | `image_id` | Custom image OCID. | OCID string |
+| `image_auto_update` | Use the latest matching image on each plan. When `false`, a `node-pool` keeps the image it already runs until `kubernetes_version` changes. Defaults to `true`. | `true` / `false` |
 | `os` | OS name. | string |
 | `os_version` | OS version. | string |
 | `node_labels` | Kubernetes node labels. | map(string) |
