@@ -31,6 +31,15 @@ resource "oci_identity_policy" "cluster" {
   lifecycle {
     ignore_changes = [defined_tags, freeform_tags]
   }
+  # Explicit dependency ensures policies are destroyed before dynamic groups.
+  # Without this, Terraform destroys groups first (no implicit dep from string refs),
+  # causing OCI to mutate the policy ETag → 412-NoEtagMatch on the DELETE call.
+  depends_on = [
+    oci_identity_dynamic_group.workers,
+    oci_identity_dynamic_group.cluster,
+    oci_identity_dynamic_group.operator,
+    oci_identity_dynamic_group.autoscaling,
+  ]
 }
 
 resource "oci_identity_policy" "networking_policies" {
@@ -52,4 +61,10 @@ resource "oci_identity_policy" "networking_policies" {
   lifecycle {
     ignore_changes = [defined_tags, freeform_tags]
   }
+  depends_on = [
+    oci_identity_dynamic_group.workers,
+    oci_identity_dynamic_group.cluster,
+    oci_identity_dynamic_group.operator,
+    oci_identity_dynamic_group.autoscaling,
+  ]
 }

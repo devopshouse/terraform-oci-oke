@@ -108,9 +108,9 @@ resource "null_resource" "cluster_autoscaler" {
   }
 
   connection {
-    bastion_host        = var.bastion_host
-    bastion_user        = var.bastion_user
-    bastion_private_key = var.ssh_private_key
+    bastion_host        = var.use_bastion ? var.bastion_host : null
+    bastion_user        = var.use_bastion ? var.bastion_user : null
+    bastion_private_key = var.use_bastion ? var.ssh_private_key : null
     host                = var.operator_host
     user                = var.operator_user
     private_key         = var.ssh_private_key
