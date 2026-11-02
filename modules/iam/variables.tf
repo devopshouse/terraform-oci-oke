@@ -28,6 +28,8 @@ variable "create_iam_kms_policy" { type = bool }
 variable "create_iam_operator_policy" { type = bool }
 variable "create_iam_worker_policy" { type = bool }
 variable "create_iam_karpenter_policy" { type = bool }
+variable "create_iam_cluster_group" { type = bool }
+variable "cluster_group_name" { type = string }
 variable "policy_name" { type = string }
 
 # KMS
