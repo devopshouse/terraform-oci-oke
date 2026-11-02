@@ -15,3 +15,8 @@ output "policy_statements" {
   description = "Cluster IAM policy statements"
   value       = local.has_policy_statements ? local.policy_statements : null
 }
+
+output "cluster_dynamic_group_name" {
+  description = "Name of the dynamic group matching the cluster principal, when created"
+  value       = one(oci_identity_dynamic_group.cluster[*].name)
+}

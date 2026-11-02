@@ -74,6 +74,8 @@ module "iam_cluster_prerequisites" {
   create_iam_cluster_policy    = false
   create_iam_karpenter_policy  = false
   policy_name                  = local.prerequisites_policy_name
+  create_iam_cluster_group     = true
+  cluster_group_name           = null
 
   create_iam_tag_namespace = var.create_iam_tag_namespace
   create_iam_defined_tags  = var.create_iam_defined_tags
@@ -116,6 +118,8 @@ module "iam" {
   create_iam_cluster_policy    = true
   create_iam_karpenter_policy  = local.create_iam_karpenter_policy
   policy_name                  = local.default_policy_name
+  create_iam_cluster_group     = false
+  cluster_group_name           = module.iam_cluster_prerequisites.cluster_dynamic_group_name
 
   create_iam_tag_namespace = var.create_iam_tag_namespace
   create_iam_defined_tags  = var.create_iam_defined_tags

@@ -31,6 +31,15 @@ resource "oci_identity_policy" "cluster" {
   lifecycle {
     ignore_changes = [defined_tags, freeform_tags]
   }
+  # Explicit dependency ensures policies are destroyed before dynamic groups.
+  # Without this, Terraform destroys groups first (no implicit dep from string refs),
+  # causing OCI to mutate the policy ETag → 412-NoEtagMatch on the DELETE call.
+  depends_on = [
+    oci_identity_dynamic_group.workers,
+    oci_identity_dynamic_group.cluster,
+    oci_identity_dynamic_group.operator,
+    oci_identity_dynamic_group.autoscaling,
+  ]
 }
 
 resource "oci_identity_policy" "networking_policies" {
@@ -40,10 +49,10 @@ resource "oci_identity_policy" "networking_policies" {
   description    = format("Policies for OKE Terraform state %v", var.state_id)
   name           = format("%v-network", var.policy_name)
   statements = concat(compact([
-    var.enable_dual_stack_defaults ? format("Allow any-user to use ipv6s in compartment id %v where all { request.principal.type = 'cluster' }", coalesce(var.network_compartment_id, var.compartment_id)) : null,
-    format("Allow any-user to manage network-security-groups in compartment id %v where request.principal.type = 'cluster'", coalesce(var.network_compartment_id, var.compartment_id)),
+    var.enable_dual_stack_defaults ? format("Allow dynamic-group %v to use ipv6s in compartment id %v", var.cluster_group_name, coalesce(var.network_compartment_id, var.compartment_id)) : null,
+    format("Allow dynamic-group %v to manage network-security-groups in compartment id %v", var.cluster_group_name, coalesce(var.network_compartment_id, var.compartment_id)),
     var.create_iam_karpenter_policy && var.network_compartment_id != null ? format("Allow any-user to manage virtual-network-family in compartment id %v where all { request.principal.type='workload', request.principal.cluster_id = '%v', request.principal.namespace = '%v', request.principal.service_account = 'karpenter' }", coalesce(var.network_compartment_id, var.compartment_id), var.cluster_id, var.karpenter_namespace) : null,
-    var.cni_type == "npn" && var.network_compartment_id != null && var.network_compartment_id != var.compartment_id ? format("Allow any-user to use private-ips in compartment id %v where all { request.principal.type = 'cluster' }", var.network_compartment_id) : null,
+    var.cni_type == "npn" && var.network_compartment_id != null && var.network_compartment_id != var.compartment_id ? format("Allow dynamic-group %v to use private-ips in compartment id %v", var.cluster_group_name, var.network_compartment_id) : null,
     ]),
     local.autoscaler_network_policy_statements
   )
@@ -52,4 +61,10 @@ resource "oci_identity_policy" "networking_policies" {
   lifecycle {
     ignore_changes = [defined_tags, freeform_tags]
   }
+  depends_on = [
+    oci_identity_dynamic_group.workers,
+    oci_identity_dynamic_group.cluster,
+    oci_identity_dynamic_group.operator,
+    oci_identity_dynamic_group.autoscaling,
+  ]
 }
