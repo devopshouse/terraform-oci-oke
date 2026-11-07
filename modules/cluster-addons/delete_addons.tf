@@ -13,7 +13,7 @@ locals {
 }
 
 resource "null_resource" "remove_addons" {
-  for_each   = var.operator_enabled ? local.remove_addons_with_defaults : {}
+  for_each   = var.operator_enabled && !var.kube_exec_local ? local.remove_addons_with_defaults : {}
   depends_on = [oci_containerengine_addon.primary_addon, oci_containerengine_addon.secondary_addon]
 
   connection {
@@ -35,6 +35,34 @@ resource "null_resource" "remove_addons" {
       ],
       lookup(each.value, "custom_commands")
     )
+  }
+
+  lifecycle {
+    precondition {
+      condition     = contains(local.supported_addons, each.key)
+      error_message = <<-EOT
+      The addon ${each.key} is not supported.
+      The list of supported addons is: ${join(", ", local.supported_addons)}.
+      EOT
+    }
+  }
+}
+
+resource "null_resource" "remove_addons_local" {
+  for_each   = var.kube_exec_local ? local.remove_addons_with_defaults : {}
+  depends_on = [oci_containerengine_addon.primary_addon, oci_containerengine_addon.secondary_addon]
+
+  triggers = { cluster_id = var.cluster_id }
+
+  provisioner "local-exec" {
+    interpreter = ["bash", var.kube_exec_script, var.cluster_id, var.region, var.kube_exec_kube_endpoint]
+    command = templatefile("${path.module}/templates/remove-addon-local.sh.tpl", {
+      addon_name      = each.key
+      cluster_id      = var.cluster_id
+      region          = var.region
+      disable_command = format(local.remove_addon_command, each.key, var.cluster_id, lookup(each.value, "remove_k8s_resources"))
+      custom_commands = join("\n", lookup(each.value, "custom_commands"))
+    })
   }
 
   lifecycle {

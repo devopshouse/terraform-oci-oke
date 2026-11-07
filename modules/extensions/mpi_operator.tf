@@ -18,7 +18,7 @@ data "http" "mpi_operator" {
 }
 
 resource "null_resource" "mpi_operator" {
-  count = var.mpi_operator_install ? 1 : 0
+  count = var.mpi_operator_install && !var.kube_exec_local ? 1 : 0
 
   triggers = {
     mpi_operator_deployment_url = local.mpi_operator_deployment_url

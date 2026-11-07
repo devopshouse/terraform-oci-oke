@@ -43,7 +43,7 @@ data "helm_template" "argocd" {
 }
 
 resource "null_resource" "argocd" {
-  count = local.argocd_enabled ? 1 : 0
+  count = local.argocd_enabled && !var.kube_exec_local ? 1 : 0
 
   triggers = {
     manifest_md5 = try(md5(local.argocd_manifest), null)

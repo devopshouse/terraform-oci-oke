@@ -163,7 +163,7 @@ data "helm_template" "cilium" {
 }
 
 resource "null_resource" "cilium" {
-  count      = var.cilium_install ? 1 : 0
+  count      = var.cilium_install && !var.kube_exec_local ? 1 : 0
   depends_on = [null_resource.prometheus]
 
   triggers = {

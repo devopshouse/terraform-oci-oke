@@ -450,3 +450,22 @@ variable "karpenter_helm_values_files" {
   description = "Paths to a local YAML files with Helm chart values (as with `helm install -f` which supports multiple). Generate with defaults using `helm show values [CHART] [flags]`."
   type        = list(string)
 }
+
+# Local execution
+
+variable "kube_exec_mode" {
+  default     = "auto"
+  description = "Where kubectl, helm and oci commands of the module run. 'remote' uses SSH to the operator, 'local' uses the machine running Terraform, 'auto' selects 'local' when create_operator = false and operator_private_ip is not set."
+  type        = string
+
+  validation {
+    condition     = contains(["auto", "remote", "local"], var.kube_exec_mode)
+    error_message = "Accepted values for kube_exec_mode are 'auto', 'remote' or 'local'."
+  }
+}
+
+variable "kube_exec_admin_user_ocids" {
+  default     = []
+  description = "OCI user OCIDs bound to cluster-admin by the kube-exec-admin-crb ClusterRoleBinding in local mode. An empty list applies the binding with no subjects."
+  type        = list(string)
+}

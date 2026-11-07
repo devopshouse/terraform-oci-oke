@@ -2,7 +2,10 @@
 # Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl
 
 locals {
-  yaml_manifest_path           = "/home/${var.operator_user}/yaml"
+  # Derived from the cluster OCID because state_id can be reused between clusters.
+  kube_exec_dir                = ".terraform/oke-exec/${substr(sha256(var.cluster_id), 0, 16)}"
+  kube_exec_interpreter        = ["bash", var.kube_exec_script, var.cluster_id, var.region, var.kube_exec_kube_endpoint]
+  yaml_manifest_path           = var.kube_exec_local ? "${local.kube_exec_dir}/yaml" : "/home/${var.operator_user}/yaml"
   kubectl                      = "set -o pipefail; kubectl"
   helm                         = "set -o pipefail; helm"
   kubectl_apply_ns_file        = "${local.kubectl} apply -n %s -f %s"

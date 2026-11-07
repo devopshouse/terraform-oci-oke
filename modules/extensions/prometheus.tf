@@ -58,7 +58,7 @@ data "helm_template" "prometheus" {
 }
 
 resource "null_resource" "prometheus" {
-  count = var.prometheus_install ? 1 : 0
+  count = var.prometheus_install && !var.kube_exec_local ? 1 : 0
 
   triggers = {
     helm_version = var.prometheus_helm_version

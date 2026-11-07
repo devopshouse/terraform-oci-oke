@@ -18,7 +18,7 @@ data "http" "sriov_device_plugin" {
 }
 
 resource "null_resource" "sriov_device_plugin" {
-  count = var.sriov_device_plugin_install ? 1 : 0
+  count = var.sriov_device_plugin_install && !var.kube_exec_local ? 1 : 0
 
   triggers = {
     sriov_device_plugin_daemonset_url = local.sriov_device_plugin_daemonset_url

@@ -43,7 +43,7 @@ data "helm_template" "metrics_server" {
 }
 
 resource "null_resource" "metrics_server" {
-  count = local.metrics_server_enabled ? 1 : 0
+  count = local.metrics_server_enabled && !var.kube_exec_local ? 1 : 0
 
   triggers = {
     manifest_md5 = try(md5(local.metrics_server_manifest), null)

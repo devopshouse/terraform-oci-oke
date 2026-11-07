@@ -13,7 +13,7 @@ locals {
 }
 
 resource "null_resource" "service_account_crb" {
-  for_each = var.create_service_account ? local.sa_with_cluster_role_bindings : {}
+  for_each = var.create_service_account && !var.kube_exec_local ? local.sa_with_cluster_role_bindings : {}
 
   triggers = {
     service_account_name                 = each.value.sa_name
@@ -45,17 +45,8 @@ resource "null_resource" "service_account_crb" {
   provisioner "remote-exec" {
     inline = [
       "kubectl get ns ${self.triggers.service_account_namespace} || kubectl create ns ${self.triggers.service_account_namespace}",
-      "kubectl create sa -n ${self.triggers.service_account_namespace} ${self.triggers.service_account_name}",
-      "kubectl create clusterrolebinding ${self.triggers.service_account_cluster_role_binding} --clusterrole=${self.triggers.service_account_cluster_role} --serviceaccount=${self.triggers.service_account_namespace}:${self.triggers.service_account_name}"
-    ]
-  }
-
-  provisioner "remote-exec" {
-    when       = destroy
-    on_failure = continue
-    inline = [
-      "kubectl delete clusterrolebinding ${self.triggers.service_account_cluster_role_binding}",
-      "kubectl delete sa -n ${self.triggers.service_account_namespace} ${self.triggers.service_account_name}"
+      "kubectl get sa -n ${self.triggers.service_account_namespace} ${self.triggers.service_account_name} || kubectl create sa -n ${self.triggers.service_account_namespace} ${self.triggers.service_account_name}",
+      "kubectl get clusterrolebinding ${self.triggers.service_account_cluster_role_binding} || kubectl create clusterrolebinding ${self.triggers.service_account_cluster_role_binding} --clusterrole=${self.triggers.service_account_cluster_role} --serviceaccount=${self.triggers.service_account_namespace}:${self.triggers.service_account_name}"
     ]
   }
 
@@ -71,7 +62,7 @@ resource "null_resource" "service_account_crb" {
 }
 
 resource "null_resource" "service_account_rb" {
-  for_each = var.create_service_account ? local.sa_with_role_bindings : {}
+  for_each = var.create_service_account && !var.kube_exec_local ? local.sa_with_role_bindings : {}
 
   triggers = {
     service_account_name         = each.value.sa_name
@@ -103,19 +94,10 @@ resource "null_resource" "service_account_rb" {
   provisioner "remote-exec" {
     inline = [
       "kubectl get ns ${self.triggers.service_account_namespace} || kubectl create ns ${self.triggers.service_account_namespace}",
-      "kubectl create sa -n ${self.triggers.service_account_namespace} ${self.triggers.service_account_name}",
+      "kubectl get sa -n ${self.triggers.service_account_namespace} ${self.triggers.service_account_name} || kubectl create sa -n ${self.triggers.service_account_namespace} ${self.triggers.service_account_name}",
       self.triggers.service_account_role != "" ?
-      "kubectl create rolebinding -n ${self.triggers.service_account_namespace} ${self.triggers.service_account_role_binding} --role=${self.triggers.service_account_role} --serviceaccount=${self.triggers.service_account_namespace}:${self.triggers.service_account_name}" :
-      "kubectl create rolebinding -n ${self.triggers.service_account_namespace} ${self.triggers.service_account_role_binding} --clusterrole=${self.triggers.service_account_cluster_role} --serviceaccount=${self.triggers.service_account_namespace}:${self.triggers.service_account_name}"
-    ]
-  }
-
-  provisioner "remote-exec" {
-    when       = destroy
-    on_failure = continue
-    inline = [
-      "kubectl delete rolebinding -n ${self.triggers.service_account_namespace} ${self.triggers.service_account_role_binding}",
-      "kubectl delete sa -n ${self.triggers.service_account_namespace} ${self.triggers.service_account_name}"
+      "kubectl get rolebinding -n ${self.triggers.service_account_namespace} ${self.triggers.service_account_role_binding} || kubectl create rolebinding -n ${self.triggers.service_account_namespace} ${self.triggers.service_account_role_binding} --role=${self.triggers.service_account_role} --serviceaccount=${self.triggers.service_account_namespace}:${self.triggers.service_account_name}" :
+      "kubectl get rolebinding -n ${self.triggers.service_account_namespace} ${self.triggers.service_account_role_binding} || kubectl create rolebinding -n ${self.triggers.service_account_namespace} ${self.triggers.service_account_role_binding} --clusterrole=${self.triggers.service_account_cluster_role} --serviceaccount=${self.triggers.service_account_namespace}:${self.triggers.service_account_name}"
     ]
   }
 
@@ -132,7 +114,7 @@ resource "null_resource" "service_account_rb" {
 
 # Resource to get service account token for cluster role bindings
 resource "null_resource" "service_account_token_crb" {
-  for_each = var.create_service_account ? local.sa_with_cluster_role_bindings : {}
+  for_each = var.create_service_account && !var.kube_exec_local ? local.sa_with_cluster_role_bindings : {}
 
   triggers = {
     service_account_name      = each.value.sa_name
@@ -215,7 +197,7 @@ resource "null_resource" "service_account_token_crb" {
 
 # Resource to get service account token for role bindings
 resource "null_resource" "service_account_token_rb" {
-  for_each = var.create_service_account ? local.sa_with_role_bindings : {}
+  for_each = var.create_service_account && !var.kube_exec_local ? local.sa_with_role_bindings : {}
 
   triggers = {
     service_account_name      = each.value.sa_name

@@ -11,6 +11,12 @@ module "utilities" {
   expected_node_count  = local.worker_count_expected
   worker_pools         = one(module.workers[*].worker_pools)
 
+  # Local execution
+  cluster_id              = local.cluster_id
+  kube_exec_local         = local.kube_exec_local
+  kube_exec_script        = local.kube_exec_script
+  kube_exec_kube_endpoint = local.kube_exec_kube_endpoint
+
   # Bastion/operator connection
   ssh_private_key = sensitive(local.ssh_private_key)
   bastion_host    = local.bastion_public_ip

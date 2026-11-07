@@ -9,6 +9,12 @@ locals {
       null
     )
   )
+
+  kube_exec_local = var.kube_exec_mode == "local" || (
+    var.kube_exec_mode == "auto" && !var.create_operator && coalesce(var.operator_private_ip, "none") == "none"
+  )
+  kube_exec_script        = "${path.module}/scripts/kube-exec.sh"
+  kube_exec_kube_endpoint = local.public_endpoint_available ? "PUBLIC_ENDPOINT" : "PRIVATE_ENDPOINT"
 }
 
 module "extensions" {
@@ -25,6 +31,13 @@ module "extensions" {
   cluster_private_endpoint = local.cluster_private_endpoint
   cluster_compartment_id   = local.compartment_id
   vcn_compartment_id       = coalesce(var.network_compartment_id, local.compartment_id)
+
+  # Local execution
+  cluster_id                 = local.cluster_id
+  kube_exec_local            = local.kube_exec_local
+  kube_exec_script           = local.kube_exec_script
+  kube_exec_kube_endpoint    = local.kube_exec_kube_endpoint
+  kube_exec_admin_user_ocids = var.kube_exec_admin_user_ocids
 
   # Bastion/operator connection
   ssh_private_key   = sensitive(local.ssh_private_key)

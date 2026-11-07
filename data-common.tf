@@ -18,6 +18,13 @@ resource "random_string" "state_id" {
   numeric = false
   special = false
   upper   = false
+
+  lifecycle {
+    precondition {
+      condition     = var.kube_exec_mode != "remote" || var.create_operator || coalesce(var.operator_private_ip, "none") != "none"
+      error_message = "kube_exec_mode = \"remote\" requires an operator: set create_operator = true or operator_private_ip."
+    }
+  }
 }
 
 output "state_id" {

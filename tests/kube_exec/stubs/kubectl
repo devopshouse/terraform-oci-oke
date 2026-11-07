@@ -1,0 +1,95 @@
+#!/usr/bin/env bash
+# Simulated kubectl. Behavior comes from files in $STUB_DIR; every call is recorded in $STUB_DIR/calls.
+set -u
+printf 'kubectl %s\n' "$*" >>"$STUB_DIR/calls"
+printf '%s\n' "${KUBECONFIG:-}" >"$STUB_DIR/kubeconfig_path"
+
+args=" $* "
+object_file() { printf '%s/objects/%s' "$STUB_DIR" "$1"; }
+kind_of() {
+  for word in "$@"; do
+    case "$word" in
+      namespace | ns | serviceaccount | sa | clusterrolebinding | rolebinding | secret) printf '%s' "$word"; return ;;
+    esac
+  done
+}
+
+case "$args" in
+  *" get --raw /version "*) [ ! -e "$STUB_DIR/api_down" ]; exit ;;
+  *" auth can-i "*)
+    answer=$(cat "$STUB_DIR/can_i" 2>/dev/null || echo yes)
+    echo "$answer"
+    [ "$answer" = yes ]
+    exit
+    ;;
+  *" --no-headers nodes "*) cat "$STUB_DIR/nodes" 2>/dev/null; exit 0 ;;
+  *" --dry-run=client "*)
+    for word in "$@"; do
+      case "$word" in
+        --from-file=.dockerconfigjson=*)
+          config=${word#--from-file=.dockerconfigjson=}
+          cp "$config" "$STUB_DIR/dockerconfig"
+          printf '%s\n' "$config" >"$STUB_DIR/dockerconfig_path"
+          ;;
+      esac
+    done
+    echo "kind: Generated"
+    exit 0
+    ;;
+esac
+
+case "${1:-}" in
+  get)
+    kind=$(kind_of "$@")
+    file=$(object_file "$kind")
+    [ -e "$file" ] || exit 1
+    case "$args" in
+      *"base64decode"*)
+        if [ -f "$STUB_DIR/token_after" ]; then
+          remaining=$(cat "$STUB_DIR/token_after")
+          if [ "$remaining" -gt 0 ]; then
+            echo $((remaining - 1)) >"$STUB_DIR/token_after"
+            exit 0
+          fi
+        fi
+        cat "$STUB_DIR/token" 2>/dev/null
+        exit 0
+        ;;
+      *"{{.type}}"*) cat "$STUB_DIR/secret_type"; exit 0 ;;
+      *"service-account.name"*) cat "$STUB_DIR/secret_sa"; exit 0 ;;
+      *"-o go-template"*) cat "$file"; exit 0 ;;
+    esac
+    exit 0
+    ;;
+  create)
+    if [ "${2:-}" = "-f" ]; then
+      cat >"$STUB_DIR/created_secret"
+      : >"$(object_file secret)"
+      exit 0
+    fi
+    file=$(object_file "$(kind_of "$@")")
+    if [ -e "$file" ]; then
+      echo "AlreadyExists" >&2
+      exit 1
+    fi
+    : >"$file"
+    exit 0
+    ;;
+  apply)
+    [ ! -e "$STUB_DIR/apply_fails" ] || exit 1
+    previous=""
+    for word in "$@"; do
+      if [ "$previous" = "-f" ]; then
+        if [ "$word" = "-" ]; then
+          cat >/dev/null
+        elif [ ! -f "$word" ]; then
+          echo "manifest not found: $word" >&2
+          exit 1
+        fi
+      fi
+      previous=$word
+    done
+    exit 0
+    ;;
+esac
+exit 0

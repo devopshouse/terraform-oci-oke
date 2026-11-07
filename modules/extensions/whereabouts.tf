@@ -33,7 +33,7 @@ data "http" "whereabouts_daemonset" {
 }
 
 resource "null_resource" "whereabouts" {
-  count = var.whereabouts_install ? 1 : 0
+  count = var.whereabouts_install && !var.kube_exec_local ? 1 : 0
 
   triggers = {
     whereabouts_ippools_url     = local.whereabouts_ippools_url

@@ -7,18 +7,32 @@ data "oci_objectstorage_namespace" "object_storage_namespace" {
 }
 
 locals {
-  oci_secret_query = "'data.\"secret-bundle-content\".content'"
-  oci_secret_get = format(
-    "oci secrets secret-bundle get --raw-output --secret-id %s --query %s | base64 -d",
-    coalesce(var.ocir_secret_id, "none"), local.oci_secret_query,
-  )
-
   region_registry   = "${var.region}.ocir.io"
   tenancy_namespace = one(data.oci_objectstorage_namespace.object_storage_namespace[*].namespace)
+
+  ocir_secret_remote_script = "/home/${var.operator_user}/ocir_secret.sh"
+  ocir_secret_script = templatefile("${path.module}/resources/ocir_secret.tpl.sh", {
+    email_address    = coalesce(var.ocir_email_address, "none")
+    registry         = local.region_registry
+    region           = var.region
+    secret_id        = coalesce(var.ocir_secret_id, "none")
+    secret_name      = coalesce(var.ocir_secret_name, "none")
+    secret_namespace = coalesce(var.ocir_secret_namespace, "none")
+    username         = join("/", compact([local.tenancy_namespace, var.ocir_username]))
+  })
+
+  ocir_secret_config_complete = alltrue([
+    local.region_registry != null,
+    local.tenancy_namespace != null,
+    var.ocir_email_address != null,
+    var.ocir_secret_name != null,
+    var.ocir_secret_namespace != null,
+    var.ocir_username != null,
+  ])
 }
 
 resource "null_resource" "ocir_secret" {
-  count    = coalesce(var.ocir_secret_id, "none") != "none" ? 1 : 0
+  count    = coalesce(var.ocir_secret_id, "none") != "none" && !var.kube_exec_local ? 1 : 0
   triggers = { always_run = timestamp() }
 
   connection {
@@ -32,32 +46,38 @@ resource "null_resource" "ocir_secret" {
     type                = "ssh"
   }
 
+  provisioner "file" {
+    content     = local.ocir_secret_script
+    destination = local.ocir_secret_remote_script
+  }
+
   provisioner "remote-exec" {
-    inline = formatlist("%s --dry-run=client -o yaml | kubectl apply -f -", [
-      format("kubectl create ns %s", var.ocir_secret_namespace),
-      format("kubectl create secret docker-registry %s",
-        join(" ", [
-          var.ocir_secret_name,
-          format("-n %s", var.ocir_secret_namespace),
-          format("--docker-server=%s", local.region_registry),
-          format("--docker-ocir_username=%s/%s", join("/", compact([local.tenancy_namespace, var.ocir_username]))),
-          format("--docker-email=%s", var.ocir_email_address),
-          format("--docker-password=%s", local.oci_secret_get)
-        ])
-      ),
-    ])
+    inline = ["bash ${local.ocir_secret_remote_script}"]
   }
 
   lifecycle {
     precondition {
-      condition = alltrue([
-        local.region_registry != null,
-        local.tenancy_namespace != null,
-        var.ocir_email_address != null,
-        var.ocir_secret_name != null,
-        var.ocir_secret_namespace != null,
-        var.ocir_username != null,
-      ])
+      condition     = local.ocir_secret_config_complete
+      error_message = "Missing required configuration for OCIR; check variables."
+    }
+  }
+}
+
+resource "null_resource" "ocir_secret_local" {
+  count = coalesce(var.ocir_secret_id, "none") != "none" && var.kube_exec_local ? 1 : 0
+  triggers = {
+    always_run = timestamp()
+    cluster_id = var.cluster_id
+  }
+
+  provisioner "local-exec" {
+    interpreter = local.kube_exec_interpreter
+    command     = local.ocir_secret_script
+  }
+
+  lifecycle {
+    precondition {
+      condition     = local.ocir_secret_config_complete
       error_message = "Missing required configuration for OCIR; check variables."
     }
   }

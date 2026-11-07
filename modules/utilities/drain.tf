@@ -2,6 +2,8 @@
 # Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl
 
 locals {
+  kube_exec_interpreter = ["bash", var.kube_exec_script, var.cluster_id, var.region, var.kube_exec_kube_endpoint]
+
   drain_enabled = var.expected_drain_count > 0
   drain_pools = (local.drain_enabled
     ? tolist([for k, v in var.worker_pools : k if tobool(lookup(v, "drain", false))]) : []
@@ -20,7 +22,7 @@ locals {
 }
 
 resource "null_resource" "drain_workers" {
-  count = local.drain_enabled ? 1 : 0
+  count = local.drain_enabled && !var.kube_exec_local ? 1 : 0
   triggers = {
     drain_pools    = jsonencode(sort(local.drain_pools))
     drain_commands = jsonencode(local.drain_commands)
@@ -39,5 +41,19 @@ resource "null_resource" "drain_workers" {
 
   provisioner "remote-exec" {
     inline = local.drain_commands
+  }
+}
+
+resource "null_resource" "drain_workers_local" {
+  count = local.drain_enabled && var.kube_exec_local ? 1 : 0
+  triggers = {
+    drain_pools    = jsonencode(sort(local.drain_pools))
+    drain_commands = jsonencode(local.drain_commands)
+    cluster_id     = var.cluster_id
+  }
+
+  provisioner "local-exec" {
+    interpreter = local.kube_exec_interpreter
+    command     = join("\n", local.drain_commands)
   }
 }

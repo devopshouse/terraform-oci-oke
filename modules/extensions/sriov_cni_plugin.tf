@@ -18,7 +18,7 @@ data "http" "sriov_cni_plugin" {
 }
 
 resource "null_resource" "sriov_cni_plugin" {
-  count = var.sriov_cni_plugin_install ? 1 : 0
+  count = var.sriov_cni_plugin_install && !var.kube_exec_local ? 1 : 0
 
   triggers = {
     sriov_cni_plugin_daemonset_url = local.sriov_cni_plugin_daemonset_url

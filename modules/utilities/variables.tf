@@ -5,6 +5,12 @@
 variable "region" { type = string }
 variable "worker_pools" { type = any }
 
+# Local execution
+variable "cluster_id" { type = string }
+variable "kube_exec_local" { type = bool }
+variable "kube_exec_script" { type = string }
+variable "kube_exec_kube_endpoint" { type = string }
+
 # Connection
 variable "bastion_host" { type = string }
 variable "bastion_user" { type = string }

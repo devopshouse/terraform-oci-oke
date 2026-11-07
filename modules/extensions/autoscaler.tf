@@ -101,7 +101,7 @@ data "helm_template" "cluster_autoscaler" {
 }
 
 resource "null_resource" "cluster_autoscaler" {
-  count = local.cluster_autoscaler_enabled ? 1 : 0
+  count = local.cluster_autoscaler_enabled && !var.kube_exec_local ? 1 : 0
 
   triggers = {
     manifest_md5 = try(md5(local.cluster_autoscaler_manifest), null)

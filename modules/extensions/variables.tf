@@ -11,6 +11,13 @@ variable "cluster_private_endpoint" { type = string }
 variable "cluster_compartment_id" { type = string }
 variable "vcn_compartment_id" { type = string }
 
+# Local execution
+variable "cluster_id" { type = string }
+variable "kube_exec_local" { type = bool }
+variable "kube_exec_script" { type = string }
+variable "kube_exec_kube_endpoint" { type = string }
+variable "kube_exec_admin_user_ocids" { type = list(string) }
+
 # Connection
 variable "bastion_host" { type = string }
 variable "bastion_user" { type = string }

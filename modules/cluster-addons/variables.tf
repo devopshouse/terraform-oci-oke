@@ -7,6 +7,13 @@ variable "cluster_addons" { type = any }
 variable "cluster_addons_to_remove" { type = any }
 variable "kubernetes_version" { type = string }
 
+variable "region" { type = string }
+
+# Local execution
+variable "kube_exec_local" { type = bool }
+variable "kube_exec_script" { type = string }
+variable "kube_exec_kube_endpoint" { type = string }
+
 # Variables required to access the operator host
 variable "bastion_host" { type = string }
 variable "bastion_user" { type = string }

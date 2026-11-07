@@ -18,7 +18,7 @@ data "http" "rdma_cni_plugin" {
 }
 
 resource "null_resource" "rdma_cni_plugin" {
-  count = var.rdma_cni_plugin_install ? 1 : 0
+  count = var.rdma_cni_plugin_install && !var.kube_exec_local ? 1 : 0
 
   triggers = {
     rdma_cni_plugin_daemonset_url = local.rdma_cni_plugin_daemonset_url

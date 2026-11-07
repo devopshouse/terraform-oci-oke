@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+# Simulated helm: only records the call.
+printf 'helm %s\n' "$*" >>"$STUB_DIR/calls"

@@ -12,7 +12,7 @@ locals {
 }
 
 resource "null_resource" "await_node_readiness" {
-  count    = var.await_node_readiness != "none" && var.expected_node_count > 0 ? 1 : 0
+  count    = var.await_node_readiness != "none" && var.expected_node_count > 0 && !var.kube_exec_local ? 1 : 0
   triggers = { expected_node_count = var.expected_node_count }
 
   connection {
@@ -33,5 +33,18 @@ resource "null_resource" "await_node_readiness" {
 
   provisioner "remote-exec" {
     inline = ["bash ${local.node_ready_script}"]
+  }
+}
+
+resource "null_resource" "await_node_readiness_local" {
+  count = var.await_node_readiness != "none" && var.expected_node_count > 0 && var.kube_exec_local ? 1 : 0
+  triggers = {
+    expected_node_count = var.expected_node_count
+    cluster_id          = var.cluster_id
+  }
+
+  provisioner "local-exec" {
+    interpreter = local.kube_exec_interpreter
+    command     = local.node_ready_template
   }
 }

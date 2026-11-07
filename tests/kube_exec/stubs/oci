@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# Simulated oci CLI. Behavior comes from files in $STUB_DIR; every call is recorded in $STUB_DIR/calls.
+set -u
+printf 'oci %s\n' "$*" >>"$STUB_DIR/calls"
+args=" $* "
+case "$args" in
+  *" create-kubeconfig "*)
+    [ ! -e "$STUB_DIR/oci_fails" ] || { echo "ServiceError" >&2; exit 1; }
+    previous=""
+    for word in "$@"; do
+      [ "$previous" != "--file" ] || : >"$word"
+      previous=$word
+    done
+    ;;
+  *" list-addons "*)
+    [ ! -e "$STUB_DIR/list_addons_fails" ] || { echo "NotAuthorizedOrNotFound" >&2; exit 1; }
+    cat "$STUB_DIR/addons" 2>/dev/null
+    ;;
+  *" disable-addon "*)
+    [ ! -e "$STUB_DIR/disable_addon_fails" ] || { echo "ServiceError" >&2; exit 1; }
+    ;;
+  *" secret-bundle get "*)
+    [ ! -e "$STUB_DIR/secret_fails" ] || { echo "ServiceError" >&2; exit 1; }
+    printf '%s' "$(cat "$STUB_DIR/ocir_password")" | base64
+    ;;
+esac
+exit 0

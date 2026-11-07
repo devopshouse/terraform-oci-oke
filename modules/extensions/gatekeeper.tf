@@ -43,7 +43,7 @@ data "helm_template" "gatekeeper" {
 }
 
 resource "null_resource" "gatekeeper" {
-  count = local.gatekeeper_enabled ? 1 : 0
+  count = local.gatekeeper_enabled && !var.kube_exec_local ? 1 : 0
 
   triggers = {
     manifest_md5 = try(md5(local.gatekeeper_manifest), null)

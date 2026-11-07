@@ -18,7 +18,7 @@ data "http" "multus" {
 }
 
 resource "null_resource" "multus" {
-  count = var.multus_install ? 1 : 0
+  count = var.multus_install && !var.kube_exec_local ? 1 : 0
 
   triggers = {
     multus_daemonset_url = local.multus_daemonset_url

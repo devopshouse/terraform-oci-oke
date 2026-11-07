@@ -52,7 +52,7 @@ data "helm_template" "karpenter" {
 }
 
 resource "null_resource" "karpenter" {
-  count = local.karpenter_enabled ? 1 : 0
+  count = local.karpenter_enabled && !var.kube_exec_local ? 1 : 0
 
   triggers = {
     manifest_md5 = try(md5(local.karpenter_manifest), null)

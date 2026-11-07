@@ -12,6 +12,12 @@ module "cluster-addons" {
 
   cluster_id         = coalesce(var.cluster_id, one(module.cluster[*].cluster_id))
   kubernetes_version = var.kubernetes_version
+  region             = var.region
+
+  # Local execution
+  kube_exec_local         = local.kube_exec_local
+  kube_exec_script        = local.kube_exec_script
+  kube_exec_kube_endpoint = local.kube_exec_kube_endpoint
 
   # Bastion/operator connection
   ssh_private_key = sensitive(local.ssh_private_key)

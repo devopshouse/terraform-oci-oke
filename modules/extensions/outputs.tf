@@ -3,16 +3,16 @@
 
 locals {
   sa_token_file_crb = {
-    for k, v in local.sa_with_cluster_role_bindings : k => "/tmp/terraform-sa-token-${v.sa_name}-${v.sa_namespace}.txt"
+    for k, v in local.sa_with_cluster_role_bindings : k => "${local.kube_exec_dir}/sa-token-${v.sa_name}-${v.sa_namespace}"
   }
   sa_token_file_rb = {
-    for k, v in local.sa_with_role_bindings : k => "/tmp/terraform-sa-token-${v.sa_name}-${v.sa_namespace}.txt"
+    for k, v in local.sa_with_role_bindings : k => "${local.kube_exec_dir}/sa-token-${v.sa_name}-${v.sa_namespace}"
   }
 }
 
 # Resource to retrieve service account token for cluster role bindings
 resource "null_resource" "service_account_token_retrieve_crb" {
-  for_each = var.create_service_account ? local.sa_with_cluster_role_bindings : {}
+  for_each = var.create_service_account && !var.kube_exec_local ? local.sa_with_cluster_role_bindings : {}
 
   triggers = {
     always_run         = timestamp()
@@ -77,6 +77,8 @@ resource "null_resource" "service_account_token_retrieve_crb" {
 
   provisioner "local-exec" {
     command = <<-EOT
+      umask 077
+      mkdir -p "$(dirname "${local.sa_token_file_crb[each.key]}")"
       SSH_KEY_FILE=$(mktemp)
       chmod 600 "$SSH_KEY_FILE"
       printf '%s' "${var.ssh_private_key}" > "$SSH_KEY_FILE"
@@ -95,6 +97,11 @@ resource "null_resource" "service_account_token_retrieve_crb" {
             ${local.sa_token_file_crb[each.key]} || { echo "ERROR: scp failed to retrieve token for ${each.value.sa_name}" >&2; rm -f "$SSH_KEY_FILE"; exit 1; }
       fi
       rm -f "$SSH_KEY_FILE"
+      if ! grep -q '[^[:space:]]' "${local.sa_token_file_crb[each.key]}"; then
+        echo "ERROR: empty token for service account ${each.value.sa_name}" >&2
+        rm -f "${local.sa_token_file_crb[each.key]}"
+        exit 1
+      fi
     EOT
   }
 
@@ -116,7 +123,7 @@ resource "null_resource" "service_account_token_retrieve_crb" {
 
 # Resource to retrieve service account token for role bindings
 resource "null_resource" "service_account_token_retrieve_rb" {
-  for_each = var.create_service_account ? local.sa_with_role_bindings : {}
+  for_each = var.create_service_account && !var.kube_exec_local ? local.sa_with_role_bindings : {}
 
   triggers = {
     always_run         = timestamp()
@@ -181,6 +188,8 @@ resource "null_resource" "service_account_token_retrieve_rb" {
 
   provisioner "local-exec" {
     command = <<-EOT
+      umask 077
+      mkdir -p "$(dirname "${local.sa_token_file_rb[each.key]}")"
       SSH_KEY_FILE=$(mktemp)
       chmod 600 "$SSH_KEY_FILE"
       printf '%s' "${var.ssh_private_key}" > "$SSH_KEY_FILE"
@@ -196,6 +205,11 @@ resource "null_resource" "service_account_token_retrieve_rb" {
             ${local.sa_token_file_rb[each.key]} || { echo "ERROR: scp failed to retrieve token for ${each.value.sa_name}" >&2; rm -f "$SSH_KEY_FILE"; exit 1; }
       fi
       rm -f "$SSH_KEY_FILE"
+      if ! grep -q '[^[:space:]]' "${local.sa_token_file_rb[each.key]}"; then
+        echo "ERROR: empty token for service account ${each.value.sa_name}" >&2
+        rm -f "${local.sa_token_file_rb[each.key]}"
+        exit 1
+      fi
     EOT
   }
 
@@ -224,7 +238,8 @@ data "external" "service_account_token_crb" {
   program = ["sh", "-c", "FILEPATH='${local.sa_token_file_crb[each.key]}'; if [ -f \"$FILEPATH\" ]; then CONTENT=$(cat \"$FILEPATH\" | base64 | tr -d '\\n'); else CONTENT=\"\"; fi; echo \"{\\\"content\\\":\\\"$CONTENT\\\"}\""]
 
   depends_on = [
-    null_resource.service_account_token_retrieve_crb
+    null_resource.service_account_token_retrieve_crb,
+    null_resource.service_account_local,
   ]
 }
 
@@ -247,7 +262,8 @@ data "external" "service_account_token_rb" {
   program = ["sh", "-c", "FILEPATH='${local.sa_token_file_rb[each.key]}'; if [ -f \"$FILEPATH\" ]; then CONTENT=$(cat \"$FILEPATH\" | base64 | tr -d '\\n'); else CONTENT=\"\"; fi; echo \"{\\\"content\\\":\\\"$CONTENT\\\"}\""]
 
   depends_on = [
-    null_resource.service_account_token_retrieve_rb
+    null_resource.service_account_token_retrieve_rb,
+    null_resource.service_account_local,
   ]
 }
 

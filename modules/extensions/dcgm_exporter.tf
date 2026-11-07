@@ -67,7 +67,7 @@ data "helm_template" "dcgm_exporter" {
 }
 
 resource "null_resource" "dcgm_exporter" {
-  count = var.dcgm_exporter_install ? 1 : 0
+  count = var.dcgm_exporter_install && !var.kube_exec_local ? 1 : 0
 
   triggers = {
     helm_version = var.dcgm_exporter_helm_version
