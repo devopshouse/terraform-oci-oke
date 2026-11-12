@@ -88,9 +88,15 @@ function run_oke_init() { # Initialize OKE worker node
       cluster_ca=$(get_imds_metadata | jq -rcM '.cluster_ca_cert')
     fi
 
+    local kubelet_extra_args=()
+    if [[ -s /etc/oke/kubelet-extra-args ]]; then
+      kubelet_extra_args=(--kubelet-extra-args "$(< /etc/oke/kubelet-extra-args)")
+    fi
+
     bash /etc/oke/oke-install.sh \
       --apiserver-endpoint "${apiserver_host}" \
-      --kubelet-ca-cert "${cluster_ca}"
+      --kubelet-ca-cert "${cluster_ca}" \
+      ${kubelet_extra_args[@]+"${kubelet_extra_args[@]}"}
     return
   fi
    
