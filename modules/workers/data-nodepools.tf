@@ -18,3 +18,21 @@ locals {
     }
   ]...)
 }
+
+data "oci_containerengine_node_pools" "live_size" {
+  for_each = toset([for k, v in local.worker_pools_with_defaults : v.compartment_id
+    if lookup(v, "mode", "") == "node-pool" && tobool(lookup(v, "ignore_initial_pool_size", false))
+  ])
+  compartment_id = each.value
+  cluster_id     = var.cluster_id
+}
+
+locals {
+  # Map of node pool name to its current size, so pools scaled outside Terraform keep their size
+  live_node_pool_size = merge([
+    for _, ds in data.oci_containerengine_node_pools.live_size : {
+      for np in ds.node_pools : np.name => np.node_config_details[0].size
+      if !contains(["DELETED", "DELETING"], try(np.state, "")) && try(np.node_config_details[0].size, null) != null
+    }
+  ]...)
+}
