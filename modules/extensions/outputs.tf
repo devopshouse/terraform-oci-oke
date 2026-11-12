@@ -80,6 +80,7 @@ resource "null_resource" "service_account_token_retrieve_crb" {
   }
 
   provisioner "local-exec" {
+    quiet   = true
     command = <<-EOT
       umask 077
       mkdir -p "${local.sa_token_dir}"
@@ -193,6 +194,7 @@ resource "null_resource" "service_account_token_retrieve_rb" {
   }
 
   provisioner "local-exec" {
+    quiet   = true
     command = <<-EOT
       umask 077
       mkdir -p "${local.sa_token_dir}"
