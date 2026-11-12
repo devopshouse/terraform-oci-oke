@@ -7,6 +7,13 @@ locals {
 
   # https://canonical-cloud-init.readthedocs-hosted.com/en/latest/reference/merging.html
   default_cloud_init_merge_type = "list(append)+dict(no_replace,recurse_list)+str(append)"
+
+  # Taints registered by the kubelet at node start, as "--register-with-taints=key=value:effect,..."
+  kubelet_taint_args = {
+    for k, v in local.enabled_worker_pools : k => join(",", [
+      for t in lookup(v, "taints", []) : format("%s%s:%s", t.key, try(t.value, "") == "" ? "" : "=${t.value}", t.effect)
+    ])
+  }
 }
 
 data "oci_core_image" "workers" {
@@ -133,6 +140,17 @@ data "cloudinit_config" "workers" {
       )
       filename   = "50-oke-ubuntu.sh"
       merge_type = local.default_cloud_init_merge_type
+    }
+  }
+
+  # Kubelet extra args read by the OKE startup script below
+  dynamic "part" {
+    for_each = !each.value.disable_default_cloud_init && lookup(local.ubuntu_worker_pools, each.key, null) == null && local.kubelet_taint_args[each.key] != "" ? [1] : []
+    content {
+      content_type = "text/x-shellscript"
+      content      = "#!/usr/bin/env bash\nmkdir -p /etc/oke\nprintf '%s' '--register-with-taints=${local.kubelet_taint_args[each.key]}' > /etc/oke/kubelet-extra-args\n"
+      filename     = "45-kubelet-taints.sh"
+      merge_type   = local.default_cloud_init_merge_type
     }
   }
 
