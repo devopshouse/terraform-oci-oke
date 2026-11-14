@@ -243,7 +243,7 @@ resource "null_resource" "service_account_token_retrieve_rb" {
 data "external" "service_account_token_crb" {
   for_each = var.create_service_account ? local.sa_with_cluster_role_bindings : {}
 
-  program = ["sh", "-c", "FILEPATH='${local.sa_token_file_crb[each.key]}'; if [ -f \"$FILEPATH\" ]; then CONTENT=$(cat \"$FILEPATH\" | base64 | tr -d '\\n'); else CONTENT=\"\"; fi; echo \"{\\\"content\\\":\\\"$CONTENT\\\"}\""]
+  program = sensitive(["sh", "-c", "FILEPATH='${local.sa_token_file_crb[each.key]}'; if [ -f \"$FILEPATH\" ]; then CONTENT=$(cat \"$FILEPATH\" | base64 | tr -d '\\n'); else CONTENT=\"\"; fi; echo \"{\\\"content\\\":\\\"$CONTENT\\\"}\""])
 
   depends_on = [
     null_resource.service_account_token_retrieve_crb
@@ -266,7 +266,7 @@ locals {
 data "external" "service_account_token_rb" {
   for_each = var.create_service_account ? local.sa_with_role_bindings : {}
 
-  program = ["sh", "-c", "FILEPATH='${local.sa_token_file_rb[each.key]}'; if [ -f \"$FILEPATH\" ]; then CONTENT=$(cat \"$FILEPATH\" | base64 | tr -d '\\n'); else CONTENT=\"\"; fi; echo \"{\\\"content\\\":\\\"$CONTENT\\\"}\""]
+  program = sensitive(["sh", "-c", "FILEPATH='${local.sa_token_file_rb[each.key]}'; if [ -f \"$FILEPATH\" ]; then CONTENT=$(cat \"$FILEPATH\" | base64 | tr -d '\\n'); else CONTENT=\"\"; fi; echo \"{\\\"content\\\":\\\"$CONTENT\\\"}\""])
 
   depends_on = [
     null_resource.service_account_token_retrieve_rb
